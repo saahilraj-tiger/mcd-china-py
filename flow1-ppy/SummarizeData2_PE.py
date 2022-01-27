@@ -389,7 +389,7 @@ wap_cal_base.groupby(['LVLLISTID','mcd_gbal_lcat_id_nu'])
 
 wap_cal_base[wap_cal_base['newprice '].notna() & wap_cal_base['oldprice '].notna() & wap_cal_base['pestore']==1]
 
-
+wap_cal_base
 
 
 
