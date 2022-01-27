@@ -1,0 +1,120 @@
+---
+# Environment
+envir: prod
+
+#LOCATION FOR SHARED CODE
+mcrloc: "/opt/sasdata/envir/SASCode/ReportingPackages/PEReports/macros"
+
+# Enter the country name as it should appear in the libname, remember to be case specific
+# Australia Canada France Germany Russia UK
+
+cntry: Italy
+
+
+
+round1pre: 21JUN2021
+round1start: 07JUL2021
+burn: 3
+weeks: 12
+round: 2_2021
+
+# DELOITTE TIGER COMBINED
+
+Vendor: TIGER
+  # DELOITTE FILES !!!
+  #File name for external files ***/
+delfldte: 20210222
+dlfldte2: 022221
+#   files provided by Deloitte ***/
+newfile1: del_fr_r1_recs_
+gcpric1: fr_price_contr_to_gc_
+
+#   TIGER FILES !!!
+#   File name for external files
+
+talfldte: "20210707"
+talfldte2: "0831"
+tamnth: "mar_august"
+
+#   files provided by Tiger
+
+newfile2: del_+tamnth._recs_
+gcpric2: price_contrib_to_gc_
+
+#how many years back for post period - typcially this is one but in the case of COVID closures it could be two
+yrback: 2
+#   does this get the price sensitivity report (Tiger vs Deloitte) ***/
+PSrep: Y
+
+
+# what is the minimum view number for stores this is the greater than number***/
+minstore: 5
+
+#   what is the amount that the difference is considered promo, this is the greater than number***/
+promoamt: 9
+
+#    if net menu price must be calculated from the gross menu price what is the percent ***/
+tax: 10
+
+# dollar difference to rec price to be considered taken ***/
+recdiff: 2
+
+#   weeks to accept price ***/
+weekacp: 8
+
+#   unit criteria per week ***/
+unitcri: 10
+#   sales criteria per week ***/
+salecri: 10
+
+#   upper and lower range interval ***/
+range: 2
+
+#`Files created ***/
+recfile1: Dtt_final_recoms_+delfldte
+elasfile1: Dtt_elasticity_+delfldte
+gcelas1: Dtt_gc_elastic_+delfldte
+recfile2: TA_final_recoms_+talfldte
+elasfile2: TA_elasticity_+talfldte
+gcelas2: TA_gc_elastic_+talfldte
+
+#   !!! END INPUT PARAMETERS !!!
+
+#param
+00_ParamFile_PE:
+  path: "mcrloc/00_ParamFile_PE.sas"
+  params_file:
+    mylib1: lisa
+    mylib2: peRep
+    mylib3: inter1
+    mylib4: engine
+
+
+
+
+# /**** Get reporting base data ****/
+
+GetDataMarket: "&progpath./GetDataMarket.sas"
+mcrGetData_PE: "&mcrloc./mcrGetData_PE.sas"
+
+#/**** Summarize reporting base data ****/
+mcrSummarizeData1_PE: "&mcrloc./mcrSummarizeData1_PE.sas"
+SummarizeData_Market: "&progpath./SummarizeData_Market.sas"
+mcrSummarizeData2_PE: "&mcrloc./mcrSummarizeData2_PE.sas"
+
+mcrCOVID_Fix_PE: "&mcrloc./mcrCOVID_Fix_PE.sas"
+
+#/**** Get macro loop variables ****/
+#/*%include "&progpath./MarketDimensions.sas";*/
+
+#/*** Run all the reports ***/
+mcrReportingLayer_PE: "&mcrloc./mcrReportingLayer_PE.sas"
+
+#/*** Get the dropdown list ***/
+mcrDropDownLists_PE: "mcrloc/mcrDropDownLists_PE.sas"
+
+#/*** Export Reports Program ***/
+mcrExportReports_PE: "mcrloc/mcrExportReports_PE.sas"
+
+#/*** Create table for VA ***/
+mcrVisualAnalyticsData_PE: "mcrloc/mcrVisualAnalyticsData_PE.sas"
