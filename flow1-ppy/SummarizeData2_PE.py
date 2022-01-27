@@ -1,3 +1,4 @@
+from tkinter import W
 import pandas as pd
 import numpy as np
 import math
@@ -402,11 +403,105 @@ wap_cal_base
 
 #/*** average measured GC for recommended price change items ***/
 
+Waterfallbase_rest2 = pd.DataFrame()
+Waterfallbase_rest2.groupby(['LVLLISTID',wap_cal_base['mcd_gbal_lcat_id_nu']])
+if (Waterfallbase_rest2['newprice'].notna() and Waterfallbase_rest2['oldprice'].notna() and Waterfallbase_rest2['pestore'] ==1):
+    Waterfallbase_rest2['New_WAP'] = sum(Waterfallbase_rest2['newprice']*Waterfallbase_rest2['units_ly'])/sum(Waterfallbase_rest2['units_ly'])
+    Waterfallbase_rest2['Old_WAP'] = sum(Waterfallbase_rest2['oldprice']*Waterfallbase_rest2['units_ly'])/sum(Waterfallbase_rest2['units_ly'])
 
 
 
+Waterfallbase_rest3 = pd.DataFrame()
+Waterfallbase_rest3.groupby(['LVLLISTID',wap_cal_base['mcd_gbal_lcat_id_nu']])
+if (Waterfallbase_rest3['rcom_prc'].notna() and Waterfallbase_rest3['prcg_engn_curr_prc'].notna() and Waterfallbase_rest3['pestore'] ==1):
+    Waterfallbase_rest3['Rec_WAP'] = sum(Waterfallbase_rest3['rcom_prc']*Waterfallbase_rest3['units_ly'])/sum(Waterfallbase_rest3['units_ly'])
+    Waterfallbase_rest3['Prcg_eng_WAP'] = sum(Waterfallbase_rest3['prcg_engn_curr_prc']*Waterfallbase_rest3['units_ly'])/sum(Waterfallbase_rest3['units_ly'])
 
 
+waterfallbase_rest1 = pd.DataFrame()
+waterfallbase_rest1 = waterfallbse_round.merge(left_on=wkly_pmix_trans_REST on='mcd_gbal_lcat_id_nu')
+waterfallbase_rest1 = waterfallbase_rest1.merge(Waterfallbase_rest2 ,how='left' ,on = 'mcd_gbal_lcat_id_nu')
+waterfallbase_rest1 = waterfallbase_rest1.merge(Waterfallbase_rest3 ,how='left' ,on = 'mcd_gbal_lcat_id_nu')
+
+waterfallbase_rest1.groupby(waterfallbase_rest1['LVLLISTID'],waterfallbase_rest1['mcd_gbal_lcat_id_nu'],
+                            waterfallbase_rest1['store_nu'],waterfallbase_rest1['AvgGuestCount_CY'],
+                            waterfallbase_rest1['AvgGuestCount_LY'],waterfallbase_rest1['AvgGuestCount_Pre_CY'],
+                            waterfallbase_rest1['avg_YOY_tot_GC'], waterfallbase_rest1['gc_elastic'], waterfallbase_rest1['InfluencePrcGC'], 
+		                    waterfallbase_rest1['PEStore'], waterfallbase_rest1['new_WAP'], waterfallbase_rest1['old_WAP'], 
+                            waterfallbase_rest1['Rec_WAP'], waterfallbase_rest1['Prcg_eng_WAP']).agg(
+            est_Units = pd.NamedAgg(column='est_Units', aggfunc='sum'),
+            est_margin = pd.NamedAgg(column='est_margin', aggfunc='sum'),
+            low_est_margin = pd.NamedAgg(column='low_est_margin', aggfunc='sum'),
+            up_est_margin = pd.NamedAgg(column='up_est_margin', aggfunc='sum'),
+            est_sales = pd.NamedAgg(column='est_sales', aggfunc='sum'),
+            low_est_sales = pd.NamedAgg(column='low_est_sales', aggfunc='sum'),
+            up_est_sales = pd.NamedAgg(column='up_est_sales', aggfunc='sum'),
+            
+            rec_Units = pd.NamedAgg(column='rec_Units', aggfunc='sum'),
+            rec_margin = pd.NamedAgg(column='rec_margin', aggfunc='sum'),
+            low_rec_margin = pd.NamedAgg(column='low_rec_margin', aggfunc='sum'),
+            up_rec_margin = pd.NamedAgg(column='up_rec_margin', aggfunc='sum'),
+            rec_sales = pd.NamedAgg(column='rec_sales', aggfunc='sum'),
+            low_rec_sales = pd.NamedAgg(column='low_rec_sales', aggfunc='sum'),
+            up_rec_sales = pd.NamedAgg(column='up_rec_sales', aggfunc='sum'),
+
+            measured_marginRecs = pd.NamedAgg(column='measured_marginRecs', aggfunc='sum'),
+            measured_salesRecs = pd.NamedAgg(column='measured_salesRecs', aggfunc='sum'),
+            measured_margin = pd.NamedAgg(column='measured_margin', aggfunc='sum'),
+            measured_sales = pd.NamedAgg(column='measured_sales', aggfunc='sum'),
+            GuestCountMrgImpact = pd.NamedAgg(column='GuestCountMrgImpact', aggfunc='sum'),
+            GuestCountSlsImpact = pd.NamedAgg(column='GuestCountSlsImpact', aggfunc='sum'),
+
+            RecAccept = pd.NamedAgg(column='acptflag', aggfunc='sum'),
+            RecAdded = pd.NamedAgg(column='addflag', aggfunc='sum'),
+            RecFlag = pd.NamedAgg(column='recflag', aggfunc='sum'),
+            AvgUnits_LY = pd.NamedAgg(column='AvgUnits_LY', aggfunc='sum'),
+            AvgUnits_Pre_CY = pd.NamedAgg(column='AvgUnits_Pre_CY', aggfunc='sum'),
+            AvgUnits_CY = pd.NamedAgg(column='AvgUnits_CY', aggfunc='sum'),
+            avgTotalsales_LY = pd.NamedAgg(column='AvgSales_LY', aggfunc='sum'),
+            avgTotalsales_Pre_CY = pd.NamedAgg(column='AvgSales_Pre_CY', aggfunc='sum'),
+            avgTotalsales_CY = pd.NamedAgg(column='AvgSales_CY', aggfunc='sum'),
+            AvgTotalCost_LY = pd.NamedAgg(column='AvgCost_LY', aggfunc='sum'),
+            AvgTotalCost_pre_CY = pd.NamedAgg(column='AvgCost_pre_CY', aggfunc='sum'),
+            AvgTotalCost_CY = pd.NamedAgg(column='AvgCost_CY', aggfunc='sum'),
+            AvgTotalMargin_LY = pd.NamedAgg(column='waterfallbase_rest1['AvgSales_LY-waterfallbase_rest1['AvgCost_LY', aggfunc='sum'), #todo
+            AvgTotalMargin_pre_CY = pd.NamedAgg(column='AvgSales_Pre_CY-waterfallbase_rest1['AvgCost_pre_CY', aggfunc='sum'),
+            AvgTotalMargin_CY = pd.NamedAgg(column='AvgSales_CY-waterfallbase_rest1['AvgCost_CY', aggfunc='sum'),
+            act_Units = pd.NamedAgg(column='act_Units', aggfunc='sum'),
+            act_Sales = pd.NamedAgg(column='act_Sales', aggfunc='sum'),
+            act_Margin = pd.NamedAgg(column='act_Margin', aggfunc='sum'),
+            pre_act_Units = pd.NamedAgg(column='pre_act_Units', aggfunc='sum'),
+            pre_act_Sales = pd.NamedAgg(column='pre_act_Sales', aggfunc='sum'),
+            pre_act_Margin = pd.NamedAgg(column='pre_act_Margin', aggfunc='sum')
+
+                            )
+waterfallbase_rest1['Overall_PC_per_YOY'] = (sum(
+    (waterfallbase_rest1['avgprice_cy']-waterfallbase_rest1['avgprice_ly'])*waterfallbase_rest1['avgunits_ly'])/sum(
+        waterfallbase_rest1['avgunits_ly']))/(sum(waterfallbase_rest1['avgprice_ly']*waterfallbase_rest1['avgunits_ly'])/sum(
+            waterfallbase_rest1['avgunits_ly']))
+waterfallbase_rest1['menupricechgRecItems'] = (sum(
+    (waterfallbase_rest1['avgprice_cy']-waterfallbase_rest1['Non_Rec_Price'])*waterfallbase_rest1['avgunits_ly'])/sum(
+        waterfallbase_rest1['avgunits_ly']))/(sum(waterfallbase_rest1['avgprice_ly']*waterfallbase_rest1['avgunits_ly'])/sum(
+            waterfallbase_rest1['avgunits_ly']))
+            #menu price change recommended items plus other adds
+waterfallbase_rest1['menupricechgItems'] = (sum(
+    (waterfallbase_rest1['avgprice_cy']-waterfallbase_rest1['Non_Rec_Price2'])*waterfallbase_rest1['avgunits_ly'])/sum(
+        waterfallbase_rest1['avgunits_ly']))/(sum(
+    waterfallbase_rest1['avgprice_ly']*waterfallbase_rest1['avgunits_ly'])/sum(waterfallbase_rest1['avgunits_ly']))
+waterfallbase_rest1['AvgGuestCount_Pre_CY'] = waterfallbse_round['AvgGuestCount_Pre_CY']
+waterfallbase_rest1['AvgGuestCount_CY'] = waterfallbse_round['AvgGuestCount_CY']
+waterfallbase_rest1['AvgGuestCount_LY'] = waterfallbse_round['AvgGuestCount_LY']
+waterfallbase_rest1['avg_YOY_tot_rest_price'] = (sum(
+    waterfallbase_rest1['AvgSales_CY']/waterfallbase_rest1['avgunits_cy'])-sum(
+        waterfallbase_rest1['avgSales_ly']/waterfallbase_rest1['AvgUnits_LY']))/sum(
+            waterfallbase_rest1['avgSales_LY']/waterfallbase_rest1['avgUnits_LY'])
+waterfallbase_rest1['Avg_YOY_tot_rest_sales'] = sum(waterfallbase_rest1['AvgSales_CY']-waterfallbase_rest1['AvgSales_LY'])/sum(
+    waterfallbase_rest1['AvgSales_LY'])
+waterfallbase_rest1['avg_YOY_rest_margin'] = (sum(waterfallbase_rest1['AvgSales_CY']-waterfallbase_rest1['AvgCost_CY'])-sum(
+    waterfallbase_rest1['AvgSales_LY']-waterfallbase_rest1['AvgCost_LY']))/sum(
+        waterfallbase_rest1['AvgSales_LY']-waterfallbase_rest1['AvgCost_LY'])
+waterfallbase_rest1['avg_YOY_tot_GC'] = (
+    waterfallbse_round['AvgGuestCount_CY']-waterfallbse_round['AvgGuestCount_LY'])/waterfallbse_round['AvgGuestCount_LY']
 
 
 
