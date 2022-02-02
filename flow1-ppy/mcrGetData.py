@@ -87,7 +87,7 @@ weekenddates3=pd.merge(weekenddates2 , weekenddates1c ,how='inner',left_on=['wk_
 print(weekenddates3)
 
 weekenddates=pd.concat([weekenddates3,weekenddates1],axis=1)
-weekenddates=weekenddates[weekenddates['lastyear']=='wk_end_thu_end_yr_nu']
+weekenddates=weekenddates[weekenddates['lastyear']==weekenddates['wk_end_thu_end_yr_nu']]
 weekenddates['period']=weekenddates['period'].apply(lambda x: "LY" if x=="CY" else ("Pre_LY" if x=="Pre_CY" else x ))
 weekenddates.drop(['lastyear'],axis=1)
 print(weekenddates)
@@ -130,10 +130,10 @@ def loop2():
         month=monthnum
         period=period
 
-        wkly_pmix1=pd.DataFrame(f"{mylib1}/wkly_pmix1")
+        wkly_pmix1=pd.DataFrame(f"{mylib1}wkly_pmix1")
         append_data1=wkly_pmix1.append(wkly_pmix)       #base is wkly_pmix1
 
-        gstcnts1=pd.DataFrame(f"{mylib1}/gstcnts")
+        gstcnts1=pd.DataFrame(f"{mylib1}gstcnts")
         append_data2=gstcnts1.append(gstcnts1)
 
        #  return append_data1,append_data2           #if need it
@@ -182,7 +182,7 @@ PriceSnap2['prc_end_dt ']=np.where(PriceSnap2['prc_end_dt '].isna(),"31DEC2099")
 PriceSnap3=PriceSnap2
 PriceSnap3.groupby(['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'frnt_cter_itm_prc_am']).agg({'prc_eff_dt':np.min(),'(prc_end_dt) ':np.max()})
 
-price_recs_round=f"{mylib3}.{price_recs_round}"+file['round']
+price_recs_round=f"{mylib3}{price_recs_round}"+file['round']
 PriceSnap3['rcom_prc']=price_recs_round['rcom_prc']
 PriceSnap4a=pd.merge(PriceSnap3,price_recs_round,how='left',on=['MCD_GBAL_LCAT_ID_NU','MCD_GBAL_LCAT_ID_NU'])
 PriceSnap4a[PriceSnap4a['prc_eff_dt ']>round1pre]

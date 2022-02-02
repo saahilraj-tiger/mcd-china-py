@@ -4,7 +4,7 @@ import os
 from param_file import *
 
 # current working directory
-print(os.getcwd())
+# print(os.getcwd())
 
 
 with open(r'C:\Users\gopala.chennu\Desktop\Current\vs\Codes\master.yml', 'r') as doc:
@@ -14,10 +14,11 @@ mylib4 = file['mylib4']
 newfile2 = file['newfile2']
 gcpric2=file['gcpric2']
 
-newfile2txt = pd.read_table(r"f'{infile}'/newfile2.txt", delim_whitespace=True)
+newfile2txt = pd.read_table(f'{infile}/newfile2.txt', delim_whitespace=True)
 
 # newfile2_data = f"{mylib4}{newfile2}"
 newfile2_data = pd.DataFrame(newfile2txt)
+
 newfile_data.columns = ["sld_menu_itm_id",
                         "Independent_item",
                         "MCD_GBAL_LCAT_ID_NU",
@@ -32,9 +33,10 @@ newfile_data.columns = ["sld_menu_itm_id",
                         "rcom_net_prc"]
 print(newfile2_data)
 
-gcpric2_data=pd.read_table(r"f'{infile}'/gcpric2.txt")
+gcpric2_data=pd.read_table(f'{infile}/gcpric2.txt')
 
 gcpric2_data.columns=['MCD_GBAL_LCAT_ID_NU ','rsq_prc']
+
 print(gcpric2)
 
 
