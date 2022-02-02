@@ -9,23 +9,23 @@ with open(r"C:\Users\gopala.chennu\Desktop\Current\vs\Codes\master.yml", "r") as
 cntry = file["cntry"]
 envir = file["envir"]
 
-wkpmix = f"/opt/sasdata/prod/Data/{cntry}/pmix/weekly"
-dlpmix = "/opt/sasdata/prod/Datacntry/pmix/daily"
-gcpmix = f"/opt/sasdata/prod/Data/{cntry}/pmix/gstcnts"
-lookup = f"/opt/sasdata/prod/Data/{cntry}"
-lisa = f"/opt/saswork/temp/lisa/PEReports/{cntry}."
-engine = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/engine"
-inter1 = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/working"
-peRep = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/reports"
-mnthdata = f"/opt/sasdata/{envir}/Data/{cntry}/MonthlyReports/data"
-dellib = f"/opt/sasdata/dev/Data/{cntry}/deloitte/For_gbl_prcg"
-dlvDpmix = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/daily"
-dlvWpmix = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/weekly"
-dlvgcpmx = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/gstcnts"
+wkpmix = f"/opt/sasdata/prod/Data/{cntry}/pmix/weekly/"
+dlpmix = "/opt/sasdata/prod/Datacntry/pmix/daily/"
+gcpmix = f"/opt/sasdata/prod/Data/{cntry}/pmix/gstcnts/"
+lookup = f"/opt/sasdata/prod/Data/{cntry}/"
+lisa = f"/opt/saswork/temp/lisa/PEReports/{cntry}/"
+engine = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/engine/"
+inter1 = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/working/"
+peRep = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/reports/"
+mnthdata = f"/opt/sasdata/{envir}/Data/{cntry}/MonthlyReports/data/"
+dellib = f"/opt/sasdata/dev/Data/{cntry}/deloitte/For_gbl_prcg/"
+dlvDpmix = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/daily/"
+dlvWpmix = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/weekly/"
+dlvgcpmx = f"/opt/sasdata/prod/Data/{cntry}/pmixXchannel/gstcnts/"
 
-progpath = f"/opt/sasdata/{envir}/SASCode/ReportingPackages/PEReports/{cntry}"
+progpath = f"/opt/sasdata/{envir}/SASCode/ReportingPackages/PEReports/{cntry}/"
 outpath1 = f"/opt/sasdata/{envir}/Data/{cntry}/PEReports/templates"
-infile = f"/opt/sasdata/{envir}/SASCode/ReportingPackages/PEReports/{cntry}/infiles"
+infile = f"/opt/sasdata/{envir}/SASCode/ReportingPackages/PEReports/{cntry}/infiles/"
 
 
 def country(cntry):
@@ -57,7 +57,7 @@ def country(cntry):
 
 
 y = country(cntry)  # enter the country details and return it
-print(y.items())
+# print(y.items())
 terr=y["terr"]
 currcde=y["currcde"]
 cntr1=y["cntr1"]
