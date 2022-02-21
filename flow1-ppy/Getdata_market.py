@@ -18,8 +18,8 @@ mylib4 = file['00_ParamFile_PE']['params_file']['mylib4']
 mylib3 = file['00_ParamFile_PE']['params_file']['mylib3']
 
 
-# from sqlalchemy import create_engine
-# engine = create_engine('postgresql://mc96201:BRlz4p$95R?P@GDAP_GDW_DI.mcdonalds.com:5439/gdap')        (Kushagra)
+#from sqlalchemy import create_engine
+#engine = create_engine('postgresql://mc96201:BRlz4p$95R?P@GDAP_GDW_DI.mcdonalds.com:5439/gdap')        (Kushagra)
 
 advrdata = f"/opt/sasdata/{envir}/Data/{cntry}/AdvisorDashboards/data/"
 
@@ -117,7 +117,6 @@ def combineloop(Vendor):
 
         recfile2_df.sort_values([" mcd_gbal_lcat_id_nu", "sld_menu_itm_id"])
 
-        # if a and not b; (Merge)
         recfile3 = pd.merge(recfile1, recfile2,
                             on="mcd_gbal_lcat_id_nu", how="left")
 
@@ -132,52 +131,36 @@ def combineloop(Vendor):
                               format='sas7bdat', encoding='utf-8')
 
         gcelas2.sort_values(by="mcd_gbal_lcat_id_nu")
-
-        # if a and not b;
-        gcelas3 = pd.merge(
-            gcelas1, gcelas2, on="mcd_gbal_lcat_id_nu", how="left")
-
+        gcelas3 = pd.merge(gcelas1, gcelas2, on="mcd_gbal_lcat_id_nu", how="left")
         gcelas = gcelas3.append(gcelas2)
 
-        elasfile1_sort = pd.read_sas(
-            f"{engine}{file['elasfile1']}", format="sas7bdat", encoding='utf-8')
+        elasfile1_sort = pd.read_sas(f"{engine}{file['elasfile1']}", format="sas7bdat", encoding='utf-8')
 
-        elasfile1_sort.sort_values(
-            by=["mcd_gbal_lcat_id_nu", "sld_menu_itm_id", "cross_elastic_item"])
+        elasfile1_sort.sort_values(by=["mcd_gbal_lcat_id_nu", "sld_menu_itm_id", "cross_elastic_item"])
 
-        elasfile2_sort = pd.read_sas(
-            f"{engine}{file['elasfile2']}", format="sas7dbat", encoding='utf-8')
+        elasfile2_sort = pd.read_sas(f"{engine}{file['elasfile2']}", format="sas7dbat", encoding='utf-8')
 
-        elasfile2.sort_values(
-            by=["mcd_gbal_lcat_id_nu", "sld_menu_itm_id", "cross_elastic_item"])
+        elasfile2.sort_values(by=["mcd_gbal_lcat_id_nu", "sld_menu_itm_id", "cross_elastic_item"])
 
-        elasfile3 = pd.merge(elasfile1, elasfile2,
-                             on="mcd_gbal_lcat_id_nu", how="left")  # if a and not b; (Merge)
+        elasfile3 = pd.merge(elasfile1, elasfile2,on="mcd_gbal_lcat_id_nu", how="left")  # if a and not b; (Merge)
 
         elasfile = elasfile3.append(elasfile2)
 
         return recfile, gcelas, elasfile
 
     if Vendor.upper() == "TIGER":
-        recfile = pd.read_sas(
-            f"{engine}{file['recfile2']}", format='sas7dbat', encoding='utd-8')
+        recfile = pd.read_sas(f"{engine}{file['recfile2']}", format='sas7dbat', encoding='utd-8')
 
-        gcelas = pd.read_sas(f"{engine}{file['gcelas2']}",
-                             format='sas7dbat', encoding='utd-8')
+        gcelas = pd.read_sas(f"{engine}{file['gcelas2']}",format='sas7dbat', encoding='utd-8')
 
-        elasfile = pd.read_sas(f"{engine}{file['elasfile2']}",
-                               format='sas7dbat', encoding='utd-8')
+        elasfile = pd.read_sas(f"{engine}{file['elasfile2']}",format='sas7dbat', encoding='utd-8')
 
         return recfile, gcelas, elasfile
 
     if Vendor.upper() == "DELOITTE":
-        recfile = pd.read_sas(
-            f"{engine}{file['recfile1']}", format='sas7dbat', encoding='utd-8')
-        gcelas = pd.read_sas(
-            f"{engine}{file['gcelas1']}", format='sas7dbat', encoding='utd-8')
-        elasfile = pd.read_sas(f"{engine}{file['elasfile1']}",
-                               format='sas7dbat', encoding='utd-8')
-
+        recfile = pd.read_sas(f"{engine}{file['recfile1']}", format='sas7dbat', encoding='utd-8')
+        gcelas = pd.read_sas(f"{engine}{file['gcelas1']}", format='sas7dbat', encoding='utd-8')
+        elasfile = pd.read_sas(f"{engine}{file['elasfile1']}",format='sas7dbat', encoding='utd-8')
         return recfile, gcelas, elasfile
 
 
@@ -262,50 +245,37 @@ itemInfo.to_csv(f"{inter1}", 'itemInfo.csv')
 
 itemInfo = pd.read_csv(f"{inter1}itemInfo.csv")
 
-itemInfo.loc[itemInfo['itm_hier_lvl3'].isin(['Not Used', 'Other No Food']), [
-    'ScrCategory', 'exclude']] = ['Exclude', 1]
+itemInfo.loc[itemInfo['itm_hier_lvl3'].isin(['Not Used', 'Other No Food']), ['ScrCategory', 'exclude']] = ['Exclude', 1]
 
-itemInfo.loc[itemInfo['sld_menu_itm_na '].isin(['Unknown', 'delete']), [
-    'ScrCategory', 'exclude']] = ['Exclude', '1']
+itemInfo.loc[itemInfo['sld_menu_itm_na '].isin(['Unknown', 'delete']), ['ScrCategory', 'exclude']] = ['Exclude', '1']
 
-itemInfo.loc[~itemInfo['sld_menu_itm_na '].isin(['Unknown', 'delete', 'Not Used', 'Other No Food']), [
-    'ScrCategory', 'exclude']] = ['Exclude', 0]
+itemInfo.loc[~itemInfo['sld_menu_itm_na '].isin(['Unknown', 'delete', 'Not Used', 'Other No Food']), ['ScrCategory', 'exclude']] = ['Exclude', 0]
 
 rank = 1
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'Drinks', 'newCategory'] = 'BEVERAGES'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='Drinks', 'newCategory'] = 'BEVERAGES'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'ALC Entrees', 'newCategory'] = 'ENTREES'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='ALC Entrees', 'newCategory'] = 'ENTREES'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'Breakfast', 'newCategory'] = 'BKFST ENTREES'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='Breakfast', 'newCategory'] = 'BKFST ENTREES'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'].isin(
-    ['EVM Large', 'EVM Medium', 'Easy Menu']), 'newCategory'] = 'COMBO MEALS'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'].isin(['EVM Large', 'EVM Medium', 'Easy Menu']), 'newCategory'] = 'COMBO MEALS'
 
-itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (
-    itemInfo['product_offered_as'] == 'EVM'), 'newCategory'] = 'COMBO MEALS'
+itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (itemInfo['product_offered_as'] == 'EVM'), 'newCategory'] = 'COMBO MEALS'
 
-itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (
-    itemInfo['product_offered_as'] == 'A la Carte'), 'newCategory'] = 'ENTREES'
+itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (itemInfo['product_offered_as'] == 'A la Carte'), 'newCategory'] = 'ENTREES'
 
-itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (
-    itemInfo['product_offered_as'] == 'Part of EVM - Side'), 'newCategory'] = 'SIDE ITEMS'
+itemInfo.loc[(itemInfo['ITM_HIER_LVL3'] == 'Salads') & (itemInfo['product_offered_as'] == 'Part of EVM - Side'), 'newCategory'] = 'SIDE ITEMS'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'Desserts', 'newCategory'] = 'DESSERTS'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='Desserts', 'newCategory'] = 'DESSERTS'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'Happy Meal', 'newCategory'] = 'HAPPY MEALS'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='Happy Meal', 'newCategory'] = 'HAPPY MEALS'
 
 itemInfo.loc[itemInfo['ITM_HIER_LVL3'] == 'McCafe', 'newCategory'] = 'MCCAFE'
 
-itemInfo.loc[itemInfo['ITM_HIER_LVL3'] ==
-             'Fries', 'newCategory'] = 'SIDE ITEMS'
+itemInfo.loc[itemInfo['ITM_HIER_LVL3'] =='Fries', 'newCategory'] = 'SIDE ITEMS'
 
-itemInfo.loc[~itemInfo['ITM_HIER_LVL3'] == ['Drinks', 'ALC Entrees', 'Breakfast', 'EVM Large', 'EVM Medium',
+itemInfo.loc[~itemInfo['ITM_HIER_LVL3'] == ['Drinks', 'ALC Entrees', 'Breakfast', 'EVM Large', 'EVM Medium',\
                                             'Easy Menu', 'Salads', 'Desserts', 'Happy Meal', 'McCafe', 'Fries'], 'newCategory'] = 'OTHER'
 
 itemInfo.loc[itemInfo['ScrCategory '] == 'Exclude', 'newCategory'] = 'Exclude'

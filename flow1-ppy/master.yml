@@ -71,7 +71,7 @@ salecri: 10
 range: 2
 
 #`Files created ***/
-recfile1: Dtt_final_recoms_+delfldte
+recfile1: 'Dtt_final_recoms_+f"{delfldte}"'
 elasfile1: Dtt_elasticity_+delfldte
 gcelas1: Dtt_gc_elastic_+delfldte
 recfile2: TA_final_recoms_+talfldte
