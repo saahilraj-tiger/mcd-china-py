@@ -3,53 +3,54 @@ import pandas as pd
 import numpy as np
 import math
 
-
 from MarketDimensions import *
 
 elasfile = pd.read_sas()
 wkly_pmix_trans_item2 = pd.read_sas()
-Cross_elst1 = pd.merge(elasfile, wkly_pmix_trans_item2, how='left', left_on=[
-                       'mcd_gbal_lcat_id_nu', 'cross_elastic_item'], right_on=['mcd_gbal_lcat_id_nu', 'sld_menu_itm_id'])
-Cross_elst1.sort_values(
-    by=['mcd_gbal_lcat_id_nu', 'sld_menu_itm_id', 'cross_elastic_item'])
+Cross_elst1 = pd.merge(
+    elasfile, wkly_pmix_trans_item2, how='left',
+    left_on=['mcd_gbal_lcat_id_nu', 'cross_elastic_item'],
+    right_on=['mcd_gbal_lcat_id_nu', 'sld_menu_itm_id']
+).sort_values(by=['mcd_gbal_lcat_id_nu', 'sld_menu_itm_id', 'cross_elastic_item'])
 print(Cross_elst1)
 
-Cross_elst = Cross_elst1
-Cross_elst = Cross_elst.rename(columns={'final_elasticity': 'elasticity'})
-Cross_elst.groupby(
-    ['mcd_gbal_lcat_id_nu ', 'sld_menu_itm_id ', 'cross_elastic_item']).first()
-Cross_elst.groupby(
-    ['mcd_gbal_lcat_id_nu ', 'sld_menu_itm_id ', 'cross_elastic_item']).last()
-
-print(Cross_elst)
-
-Cross_elst.loc[((Cross_elst['prestore'] == 1) & ~(Cross_elst['elasticity '].isna())) & (~(Cross_elst['newprice '].isna()) & ~(
-    Cross_elst['oldPrice '].isna())), 'val1'] = Cross_elst['elasticity']*(math.log(Cross_elst['newprice'])-math.log(Cross_elst['oldPrice']))
-Cross_elst.loc[~((Cross_elst['prestore'] == 1) & ~(Cross_elst['elasticity '].isna())) & (
-    ~(Cross_elst['newprice '].isna()) & ~(Cross_elst['oldPrice '].isna())), 'val1'] = np.Nan
-
-Cross_elst.loc[((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (~(Cross_elst['prcg_engn_curr_prc '].isna()) & ~(
-    Cross_elst['rcom_prc'].isna())), 'val2'] = Cross_elst['elasticity']*(math.log(Cross_elst['rcom_prc']-math.log(Cross_elst['prcg_engn_curr_prc'])))
-Cross_elst.loc[~(((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (
-    ~(Cross_elst['prcg_engn_curr_prc '].isna()) & ~(Cross_elst['rcom_prc'].isna()))), 'val2'] = np.NaN
-
-Cross_elst.loc[((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (~(Cross_elst['newprice'].isna()) & ~(
-    Cross_elst['oldPrice'].isna())), 'val1'] = (Cross_elst['elasticity']*(math.log(Cross_elst['newprice'])-math.log(Cross_elst['oldPrice']))).sum()
-Cross_elst.loc[((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (~(Cross_elst['prcg_engn_curr_prc'].isna()) & ~(
-    Cross_elst['rcom_prc'].isna())), 'val2'] = (Cross_elst['elasticity']*(math.log(Cross_elst['rcom_prc'])-math.log(Cross_elst['prcg_engn_curr_prc']))).sum()
 
 Cross_elst.groupby(
     ['mcd_gbal_lcat_id_nu ', 'sld_menu_itm_id ', 'cross_elastic_item']).last()
 
-Cross_elst.loc[~Cross_elst['val1'].isin(), 'elast_est'] = math.exp(
-    Cross_elst['val1'])
-Cross_elst.loc[~Cross_elst['val2'].isin(), 'elast_rec'] = math.exp(
-    Cross_elst['val2'])
+Cross_elst=Cross_elst1
+
+Cross_elst['val1']=np.where(
+    (Cross_elst['sld_menu_itm_id'][0])
+    &((Cross_elst['prestore'] == 1) & ~(Cross_elst['elasticity '].isna()))
+    & (~(Cross_elst['newprice '].isna()) & ~(Cross_elst['oldPrice '].isna())),
+    Cross_elst['elasticity']*(math.log(Cross_elst['newprice'])-math.log(Cross_elst['oldPrice'])),
+    1,np.nan
+)
+
+Cross_elst['val2']=np.where(
+    Cross_elst['sld_menu_itm_id'][0]
+    &((Cross_elst['prestore'] == 1) & ~(Cross_elst['elasticity '].isna()))
+    & (~(Cross_elst['prcg_engn_curr_prc '].isna()) & ~(Cross_elst['rcom_prc'].isna())),
+    Cross_elst['elasticity']*(math.log(Cross_elst['rcom_prc']-math.log(Cross_elst['prcg_engn_curr_prc']))),
+    1,np.nan
+)
+
+# Cross_elst.loc[((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (~(Cross_elst['newprice'].isna()) & ~(
+#     Cross_elst['oldPrice'].isna())), 'val1'] = (Cross_elst['elasticity']*(math.log(Cross_elst['newprice'])-math.log(Cross_elst['oldPrice']))).sum()
+# Cross_elst.loc[((Cross_elst['pestore'] == 1) & ~(Cross_elst['elasticity'].isna())) & (~(Cross_elst['prcg_engn_curr_prc'].isna()) & ~(
+#     Cross_elst['rcom_prc'].isna())), 'val2'] = (Cross_elst['elasticity']*(math.log(Cross_elst['rcom_prc'])-math.log(Cross_elst['prcg_engn_curr_prc']))).sum()
+
+Cross_elst.groupby(['mcd_gbal_lcat_id_nu ', 'sld_menu_itm_id ', 'cross_elastic_item']).last()
+
+Cross_elst.loc[~Cross_elst['val1'].isin(), 'elast_est'] = math.exp(Cross_elst['val1'])
+Cross_elst.loc[~Cross_elst['val2'].isin(), 'elast_rec'] = math.exp(Cross_elst['val2'])
 
 
-waterfallbse_elasticity = pd.merge(wkly_pmix_trans_item2, Cross_elst, how='left', on=[
-                                   'mcd_gbal_lcat_id_nu', 'sld_menu_itm_id'])
-waterfallbse_elasticity.sort_values(by=['mcd_gbal_lcat_id_nu'])
+waterfallbse_elasticity =(
+    pd.merge(wkly_pmix_trans_item2, Cross_elst, how='left', on=['mcd_gbal_lcat_id_nu', 'sld_menu_itm_id'])
+    .sort_values(by=['mcd_gbal_lcat_id_nu'])
+)
 print(waterfallbse_elasticity)
 
 
@@ -73,17 +74,17 @@ waterfallbse_elasticity.sort_values(by=['mcd_gbal_lcat_id_nu', 'delivery'])
 
 #  Do store item/store calculations
 gstcntsDlry = pd.read_sas(f"{lisa}gstcntsDlry_trans")
-waterfallbse_round = pd.merge(waterfallbse_elasticity, gstcntsDlry, how='left', on=[
-                              'mcd_gbal_lcat_id_nu', 'delivery'])
+waterfallbse_round = (
+    pd.merge(waterfallbse_elasticity, gstcntsDlry, how='left', on=['mcd_gbal_lcat_id_nu', 'delivery'])
+)
+
 waterfallbse_round.loc[waterfallbse_round['units_cy'].isna(), 'removeflag'] = 1
 waterfallbse_round.loc[((waterfallbse_round['Sales_CY']/(waterfallbse_round['units_cy ']) < .05))
                         & ((waterfallbse_round['Sales_LY']/(waterfallbse_round['units_ly ']) < .05)), 'removeflag'] = 1
 waterfallbse_round.loc[(waterfallbse_round['Sales_CY']/waterfallbse_round['units_cy '] < .05)
                         & (waterfallbse_round['units_cy '].isin([0, np.NaN])), 'removeflag'] = 1
-waterfallbse_round.loc[(waterfallbse_round['Sales_LY'] < .05) & (
-    waterfallbse_round['units_cy'].isin([0, np.NaN])), 'removeflag'] = 1
-waterfallbse_round.loc[waterfallbse_round['removeflag'].isna(),
-                                                             'removeflag'] = 0
+waterfallbse_round.loc[(waterfallbse_round['Sales_LY'] < .05) & (waterfallbse_round['units_cy'].isin([0, np.NaN])), 'removeflag'] = 1
+waterfallbse_round.loc[waterfallbse_round['removeflag'].isna(),'removeflag'] = 0
 
 waterfallbse_round[['avgunits_ly', 'avgunits_cy', 'avgunits_Pre_ly', 'avgunits_Pre_cy',
 		'AvgSales_LY', 'AvgSales_CY', 'AvgSales_pre_LY', 'AvgSales_Pre_CY',

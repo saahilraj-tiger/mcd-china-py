@@ -3,6 +3,7 @@ from datetime import date
 import mysql.connector
 from param_file import *
 
+
 with open(r'C:\Users\gopala.chennu\Desktop\Current\vs\Codes\master.yml', 'r') as doc:
     file = yaml.load(doc, Loader=yaml.FullLoader)
 
@@ -25,75 +26,67 @@ print(round1str)
 round1pre = str(pyear+"-"+pmonth+"-"+pday)
 print(round1pre)
 
-# db=mysql.connector.connect(host=" ",username=" ", passwd=" ",database=" ")
-# cursor=db.cursor()
-
-# connect to redshift(dsn=gdap user=&reduser. pwd="&redpass.");
-
-# -------- Connect to AWS Redshift connection then change again (Arkit sir)--------
-
-
-WE_END_THU = pd.DataFrame(RMDW_Tables.WE_END_THU)
-wk_end_thu_beg_dt = ' '
-wk_end_thu_end_dt = ' '
-dates = ((WE_END_THU['DATE'] >= wk_end_thu_beg_dt) &
-         (WE_END_THU['DATE'] <= wk_end_thu_end_dt))
-WE_END_THU = WE_END_THU.loc['dates']
-WE_END_THU.WK_END_THU_ID_NU.sort_values()
+WE_END_THU = pd.read_sas(f"{RMDW_Tables}WE_END_THU")
+dates = (
+    (WE_END_THU[round1str] >= WE_END_THU['wk_end_thu_beg_dt'])
+    &(WE_END_THU[round1str] <= WE_END_THU['wk_end_thu_end_dt'])
+    )
+WE_END_THU = WE_END_THU.loc[dates]
+WE_END_THU.WK_END_THU_ID_NU.sort_values(by=['WK_END_THU_ID_NU'])
 print(WE_END_THU)
 
 startweek = WE_END_THU['WK_END_THU_ID_NU ']
-startweek = pd.DataFrame(startweek)
+
 
 # for COVID Set pre year 2 back
-
-cursor.execute(
-    """
-    CREATE TABLE weekenddates1a as
-	select * from connection to redshift
-		(select *, wk_end_thu_end_yr_nu-&yrback. as lastyear
-		from RMDW_Tables.WK_END_THU
-		where (WK_END_THU_ID_NU between &startweek.-&burn.-&weeks.+1 and (&startweek.-&burn.))
-			or (WK_END_THU_ID_NU between (&startweek.+1) and &startweek.+&weeks.)
-		order by WK_END_THU_ID_NU
-		)
-    """
-)
-WK_END_THU = pd.DataFrame(RMDW_Tables.WK_END_THU)
-# where (WK_END_THU_ID_NU between &startweek.-&burn.-&weeks.+1 and (&startweek.-&burn.))
-# or (WK_END_THU_ID_NU between (&startweek.+1) and &startweek.+&weeks.)                                 # DOubt for above case 👈👈👈
-WE_END_THU.WK_END_THU_ID_NU.sort_values()
-
-weekenddates1a = WK_END_THU
+weekenddates1a=WE_END_THU.loc[
+    ((WK_END_THU['WK_END_THU_ID_NU']>=startweek-f"{file['burn']}"-f"{file['weeks']}"+1)
+    &(WK_END_THU['WK_END_THU_ID_NU']<=startweek-f"{file['burn']}"))
+    |((WK_END_THU['WK_END_THU_ID_NU']>=startweek+1)
+    &(WK_END_THU['WK_END_THU_ID_NU']<=startweek+f"{file['weeks']}"))
+].sort_values(by=['WK_END_THU_ID_NU'])
 print(weekenddates1a)
 
-weekenddates1 = pd.DataFrame(weekenddates1a)
-weekenddates1['period'] = ['CY' if WK_END_THU_ID_NU >= startweek else "Pre_CY"]
+
+weekenddates1a['period'] =np.where(
+    weekenddates1a['WK_END_THU_ID_NU']>startweek,
+    'CY','Pre_CY'
+)
+weekenddates1=weekenddates1a
 
 minlast = weekenddates1.lastyear.min()
 maxlast = weekenddates1.lastyear.max()
 print(minlast, maxlast)
 
-
-weekenddates2 = pd.DataFrame(RMDW_Tables.WK_END_THU)
-weekenddates1[(weekenddates1['wk_end_thu_end_yr_nu '] >= minlast)
-              & (weekenddates1['wk_end_thu_end_yr_nu '] <= maxlast)]
+weekenddates2=(
+    weekenddates1.loc[(weekenddates1['wk_end_thu_end_yr_nu '] >= minlast)
+    & (weekenddates1['wk_end_thu_end_yr_nu '] <= maxlast)]
+)
 weekenddates1.sort_values(by='WK_END_THU_ID_NU')
 print(weekenddates1)
 
-weekenddates1c = pd.DataFrame(weekenddates1)
-weekenddates1c.loc[53, 'wk_end_thu_wk_nu'] = 52
+weekenddates1.loc[weekenddates1['wk_end_thu_wk_nu']==53, 'wk_end_thu_wk_nu'] = 52
+weekenddates1c=weekenddates1
 print(weekenddates1c)
 
-weekenddates3 = pd.merge(weekenddates2, weekenddates1c, how='inner', left_on=[
-                         'wk_end_thu_wk_nu', 'wk_end_thu_end_yr_nu'], right_on=['wk_end_thu_wk_nu', 'lastyear'])
+weekenddates3 = pd.merge(
+    weekenddates2, weekenddates1c, how='inner',
+    left_on=['wk_end_thu_wk_nu', 'wk_end_thu_end_yr_nu'],
+    right_on=['wk_end_thu_wk_nu', 'lastyear']
+)
 print(weekenddates3)
 
 weekenddates = pd.concat([weekenddates3, weekenddates1], axis=1)
-weekenddates = weekenddates[weekenddates['lastyear']
-                            == weekenddates['wk_end_thu_end_yr_nu']]
-weekenddates['period'] = weekenddates['period'].apply(
-    lambda x: "LY" if x == "CY" else ("Pre_LY" if x == "Pre_CY" else x))
+weekenddates['period']=np.where(
+    (weekenddates['lastyear']==weekenddates['wk_end_thu_end_yr_nu'])
+    & (weekenddates['period']=='CY'),
+    'LY'
+)
+weekenddates['period']=np.where(
+    (weekenddates['lastyear']==weekenddates['wk_end_thu_end_yr_nu'])
+    & (weekenddates['period']=='Pre_CY'),
+    'Pre_LY'
+)
 weekenddates.drop(['lastyear'], axis=1)
 print(weekenddates)
 
@@ -102,15 +95,11 @@ print(weekenddates)
 
 def loop2():
     weekenddates4 = weekenddates
-    weekenddates4.drop('load_dw_audt_ts',
-                       ' updt_dw_audt_ts dw_file_id', axis=1)
+    weekenddates4.drop(['load_dw_audt_ts',' updt_dw_audt_ts dw_file_id'], axis=1)
     weekenddates4['obsnum'] = range(0, len(weekenddates4))
     print(weekenddates4)
 
     numweeks = len(weekenddates4.columns)
-
-    # proc datasets lib=&mylib1.;
-    # 	delete wkly_pmix1 gstcnts1 wkly_pmix gstcnts;       --- ⚡ NOT Understand----
 
     for i in range(numweeks):
         weeknum = weekenddates4['wk_end_thu_wk_nu'].str.strip()
@@ -125,194 +114,205 @@ def loop2():
         wkly_pmix = pd.DataFrame(f"{dlpmix}/dly_Pmix_{weekid}")
         week = weeknum
         year = yearnum
-        quarter = quarter         # Creating Columns with series Doubt 😢
+        quarter = quarter
         month = monthnum
         period = period
 
         gstcnts = pd.DataFrame(f"{gcpmix}/wkly_guest_cnt_{weekid}")
         week = weeknum
         year = yearnum
-        quarter = quarter           # Creating Columns ith series Doubt 🖐🖐
+        quarter = quarter
         month = monthnum
         period = period
 
         wkly_pmix1 = pd.DataFrame(f"{mylib1}wkly_pmix1")
-        append_data1 = wkly_pmix1.append(wkly_pmix)  # base is wkly_pmix1
+        append_data1 = wkly_pmix1.append(wkly_pmix,ignore_index=True)
 
         gstcnts1 = pd.DataFrame(f"{mylib1}gstcnts")
         append_data2 = gstcnts1.append(gstcnts1)
 
-       #  return append_data1,append_data2           #if need it
+       #  return append_data1,append_data2
 
 
 #    what are the date ranges represented by market
 #    get all prices after the operators see the recommendations up to a number of weeks later
-
-
 # connect to redshift(dsn=gdap user=&reduser. pwd="&redpass.");
 
 
-LCAT_MENU_ITM_PRC_SNAP = pd.DataFrame(RMDW_Tables.LCAT_MENU_ITM_PRC_SNAP)
-LCAT_MENU_ITM_PRC_SNAP = LCAT_MENU_ITM_PRC_SNAP[(LCAT_MENU_ITM_PRC_SNAP['terr_cd'] == terr) &
-                                                ((LCAT_MENU_ITM_PRC_SNAP['prc_end_dt'] >= pre1str) & LCAT_MENU_ITM_PRC_SNAP['prc_end_dt'] <= round1str+int(f"{weekacp}")*7) &
-                                                ((LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'] > 0) & LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'].notnull())]
-LCAT_MENU_ITM_PRC_SNAP.sort_values(
-    by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'])
-
-PriceSnap1 = LCAT_MENU_ITM_PRC_SNAP[['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID',
-                                     'prc_eff_dt', 'prc_end_dt', 'sld_menu_itm_actv_fl', 'frnt_cter_itm_prc_am']]
+PriceSnap1 = pd.read_sas(f"{RMDW_Tables}LCAT_MENU_ITM_PRC_SNAP")
+PriceSnap1 = PriceSnap1[(PriceSnap1['terr_cd'] == terr) &
+                                                ((PriceSnap1['prc_end_dt'] >= pre1str)
+                                                & (PriceSnap1['prc_end_dt'] <= round1str+int(f"{weekacp}")*7)) &
+                                                ((PriceSnap1['frnt_cter_itm_prc_am'] > 0)
+                                                & (PriceSnap1['frnt_cter_itm_prc_am'].notnull()))]
+PriceSnap1.sort_values(by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'])
 
 print(PriceSnap1)
+#/*** get all prices during the preround that ended during the post round - basically the prices that changed***/
+OLDPriceSnap1 = PriceSnap1[(
+    (PriceSnap1['terr_cd'] == terr)
+    & (PriceSnap1['prc_eff_dt'] < pre1str)
+    & ((PriceSnap1['prc_end_dt'] >= pre1str-1) & (PriceSnap1['prc_end_dt'] <= round1str+int(f"{weekacp}")*7))
+    & ((PriceSnap1['frnt_cter_itm_prc_am'] > 0) & (PriceSnap1['frnt_cter_itm_prc_am'].notnull()))
+)]
 
-
-# connect to redshift(dsn=gdap user=&reduser. pwd="&redpass.");
-
-LCAT_MENU_ITM_PRC_SNAP = pd.DataFrame(RMDW_Tables.LCAT_MENU_ITM_PRC_SNAP)
-LCAT_MENU_ITM_PRC_SNAP = LCAT_MENU_ITM_PRC_SNAP[(LCAT_MENU_ITM_PRC_SNAP['terr_cd'] == terr) &
-                                                (LCAT_MENU_ITM_PRC_SNAP['prc_eff_dt'] < pre1str) &
-                                                ((LCAT_MENU_ITM_PRC_SNAP['prc_end_dt'] >= pre1str-1) & LCAT_MENU_ITM_PRC_SNAP['prc_end_dt'] <= round1str+int(f"{weekacp}")*7) &
-                                                ((LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'] > 0) & LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'].notnull())]
-
-LCAT_MENU_ITM_PRC_SNAP.sort_values(
-    by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'])
-
-OLDPriceSnap1 = LCAT_MENU_ITM_PRC_SNAP[['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID',
-                                        'prc_eff_dt', 'prc_end_dt', 'sld_menu_itm_actv_fl', 'frnt_cter_itm_prc_am']]
-
+OLDPriceSnap1.sort_values(by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'])
 print(OLDPriceSnap1)
 
 
-PriceSnap2 = pd.concat(['PriceSnap1 ', 'OLDPriceSnap1'])
-PriceSnap2['prc_end_dt '] = np.where(
-    PriceSnap2['prc_end_dt '].isna(), "31DEC2099")
+PriceSnap2 =PriceSnap1.append(OLDPriceSnap1,ignore_index=True)
+PriceSnap2['prc_end_dt'] = np.where(PriceSnap2['prc_end_dt '].isna(), "31DEC2099",np.NaN)
 
 PriceSnap3 = PriceSnap2
 PriceSnap3.groupby(['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'frnt_cter_itm_prc_am']).agg(
-    {'prc_eff_dt': np.min(), '(prc_end_dt) ': np.max()})
+        {'prc_eff_dt': np.min(), 'prc_end_dt ': np.max()}
+    )
 
 price_recs_round = f"{mylib3}{price_recs_round}"+file['round']
 PriceSnap3['rcom_prc'] = price_recs_round['rcom_prc']
-PriceSnap4a = pd.merge(PriceSnap3, price_recs_round, how='left', on=[
-                       'MCD_GBAL_LCAT_ID_NU', 'MCD_GBAL_LCAT_ID_NU'])
-PriceSnap4a[PriceSnap4a['prc_eff_dt '] > round1pre]
+PriceSnap4a = pd.merge(PriceSnap3, price_recs_round, how='left', on=['MCD_GBAL_LCAT_ID_NU', 'MCD_GBAL_LCAT_ID_NU'])
+PriceSnap4a[PriceSnap4a['prc_eff_dt'] > file['round1pre']]
 print(PriceSnap4a)
 
-PriceSnap4b = pd.merge(PriceSnap3, price_recs_round, on=[
-                       'MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id'])
-PriceSnap4b[PriceSnap4b['prc_eff_dt '] > round1pre]
-PriceSnap4b[['MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id',
-             'frnt_cter_itm_prc_am', 'rcom_prc']]
+PriceSnap4b = pd.merge(PriceSnap3, price_recs_round, on=['MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id'])
+PriceSnap4b =PriceSnap4b[PriceSnap4b['prc_eff_dt '] > file['round1pre']]
+PriceSnap4b[['MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id','frnt_cter_itm_prc_am', 'rcom_prc']]
 PriceSnap4b.rename(columns={'frnt_cter_itm_prc_am': 'oldPrice'})
 print(PriceSnap4b)
 
+PriceSnap4a['accepted']=np.where(
+    ~(PriceSnap4a['rcom_prc'].isna())
+    & ( PriceSnap4a['rcom_prc'] == PriceSnap4a['frnt_cter_itm_prc_am']),
+    1,0
+)
+PriceSnap4a['partial']=np.where(
+    ~(PriceSnap4a['rcom_prc'].isna())
+    & ( PriceSnap4a['accepted'] ==0)
+    & (round(abs(round(PriceSnap4a['rcom_prc'],2)-round(PriceSnap4a['frnt_cter_itm_prc_am'],2))),2)<=file['recdiff'],
+    1,0
+)
+PriceSnap4a['accepted']=np.where(
+    (PriceSnap4a['rcom_prc'].isna()),
+    0,np.nan
+)
+PriceSnap4a['partial']=np.where(
+    (PriceSnap4a['rcom_prc'].isna()),
+    0,np.nan
+)
+PriceSnap5=PriceSnap4a.sort_values(
+    by=['MCD_GBAL_LCAT_ID_NU ',
+        'sld_menu_itm_id ',
+        'accepted ',
+        'partial ',
+        'prc_end_dt'], ascending=[True, False, False, False, True]
+,inplace=True)
 
-PriceSnap5 = PriceSnap4a['rcom_prc '].isna(
-).PriceSnap4a['rcom_prc'] == frnt_cter_itm_prc_am
-# if rcom_prc ne . then do;
-# 		if rcom_prc = frnt_cter_itm_prc_am then accepted=1;
-# 		else accepted=0;
-# 		if accepted=0 and round(abs(round(rcom_prc,.01)-round(frnt_cter_itm_prc_am,.01)),.01) <= &recdiff. then partial=1;
-# 		else partial=0;
-# 	end;                                                ## DOubt 😥
-# 	else do;
-# 		accepted=0;
-# 		partial=0;
+PriceSnap6=PriceSnap5.groupby(['MCD_GBAL_LCAT_ID_NU ','sld_menu_itm_id ','accepted ','partial ','prc_end_dt']).agg(
+    sld_menu_itm_id=pd.NamedAgg(column='sld_menu_itm_id',aggfunc='first')
+)
 
-# proc sort data=PriceSnap5;
-# 	by MCD_GBAL_LCAT_ID_NU sld_menu_itm_id descending accepted descending partial descending prc_end_dt;
+PriceSnap7 = pd.merge(PriceSnap6, PriceSnap4b, on=['MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id'])
+PriceSnap7['Old Menu Price']=PriceSnap7['oldPrice'].copy()
 
+PriceSnap7['increase']=np.where(
+    round(PriceSnap7['frnt_cter_itm_prc_am'],2)>round(PriceSnap7['oldPrice'],2),
+    1,np.nan
+)
+PriceSnap7['nochange']=np.where(
+    round(PriceSnap7['frnt_cter_itm_prc_am'],2)>round(PriceSnap7['oldPrice'],2),
+    1,np.nan
+)
+PriceSnap7['decrease']=np.where(
+    round(PriceSnap7['frnt_cter_itm_prc_am'],2)>round(PriceSnap7['oldPrice'],2),
+    1,np.nan
+)
 
-PriceSnap5.sort_values(
-    by=['MCD_GBAL_LCAT_ID_NU ', 'sld_menu_itm_id'], ascending=False)
-
-PriceSnap6 = PriceSnap5
-print(PriceSnap5)
-PriceSnap6.first()
-
-
-PriceSnap7 = pd.merge(PriceSnap6, PriceSnap4b, on=[
-                      'MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id'])
-PriceSnap6['Old Menu Price'] = PriceSnap4b['oldPrice']
-print(PriceSnap7)
-
-PriceSnap7['frnt_cter_itm_prc_am'] = np.where(PriceSnap7['frnt_cter_itm_prc_am'].apply(
-    np.ceil) > (PriceSnap7['oldPrice'].apply(np.ceil)), increase=1)
-# data &mylib3..PriceSnap;
-# 	set PriceSnap7;
-# 	if round(frnt_cter_itm_prc_am,.01) > round(oldPrice,.01) then increase=1;
-# 	else if round(frnt_cter_itm_prc_am,.01) = round(oldPrice,.01) then nochange=1;
-# 	else if round(frnt_cter_itm_prc_am,.01) < round(oldPrice,.01) then decrease=1;
-# run;
-
-
-PriceSnap = PriceSnap.groupby(
-    ['increase' 'nochange' 'decrease']).value_counts()
+PriceSnap = PriceSnap7.groupby(['increase' 'nochange' 'decrease']).value_counts()
 
 
 #    /*** Get Menu Board Price for price taken ***/
 
-LCAT_MENU_ITM_PRC_SNAP = pd.DataFrame(RMDW_Tables.LCAT_MENU_ITM_PRC_SNAP)
-LCAT_MENU_ITM_PRC_SNAP = LCAT_MENU_ITM_PRC_SNAP[(LCAT_MENU_ITM_PRC_SNAP['terr_cd'] == terr) & (LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'].dropna())
-                                                (LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am '] > 0)]
-LCAT_MENU_ITM_PRC_SNAP.sort_values(
-    by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'], inplace=True)
-LCAT_MENU_ITM_PRC_SNAP = LCAT_MENU_ITM_PRC_SNAP[[
-    'MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt', 'prc_end_dt', 'sld_menu_itm_actv_fl', 'frnt_cter_itm_prc_am']]
-PriceSnapMB1 = LCAT_MENU_ITM_PRC_SNAP
+LCAT_MENU_ITM_PRC_SNAP = pd.read_sas(f"{RMDW_Tables}LCAT_MENU_ITM_PRC_SNAP")
+PriceSnapMB1 = LCAT_MENU_ITM_PRC_SNAP[(
+    (LCAT_MENU_ITM_PRC_SNAP['terr_cd'] == file['terr'])
+    & (~LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am'].isna())
+    & (LCAT_MENU_ITM_PRC_SNAP['frnt_cter_itm_prc_am '] > 0)
+)].sort_values(by=['MCD_GBAL_LCAT_ID_NU', 'SLD_MENU_ITM_ID', 'prc_eff_dt'], inplace=True)\
+    [[
+    'MCD_GBAL_LCAT_ID_NU',
+    'SLD_MENU_ITM_ID',
+    'prc_eff_dt',
+    'prc_end_dt',
+    'sld_menu_itm_actv_fl',
+    'frnt_cter_itm_prc_am']]
+PriceSnapMB= PriceSnapMB1.loc[PriceSnapMB1['prc_end_dt'].isna(),'prc_end_dt'] ='31DEC2099'
 
+wkly_pmix1 = pd.read_sas(f"{lisa}/wkly_pmix1.sas7dbat")
+lastyearstrs = (
+    wkly_pmix1[wkly_pmix1['period'] == 'LY']
+    .groupby(['mcd_gbal_lcat_id_nu'])['WK_END_THU_ID_NU']
+    .count()
+    .unique()
+    .reset_index()
+    .sort_values(by=['mcd_gbal_lcat_id_nu'])
+)
+lastyearstrs.rename(columns={'WK_END_THU_ID_NU': 'weekcnt1'})
 
-PriceSnapMB['prc_end_dt'] = np.where(
-    PriceSnapMB1['prc_end_dt'].isna(), '31DEC2099')
+thisyearstrs=(
+    wkly_pmix1[wkly_pmix1['period']=='Pre_CY']
+    .groupby(['mcd_gbal_lcat_id_nu'])['WK_END_THU_ID_NU']
+    .count()
+    .unique()
+    .reset_index()
+    .sort_values(by['mcd_gbal_lcat_id_nu'])
+)
+thisyearstrs.rename(columns={'WK_END_THU_ID_NU':'weekcnt2'})
 
-wkly_pmix1 = pd.DataFrame(f"{mylib1}/wkly_pmix1")
-wkly_pmix1['period'] = [wkly_pmix1['period'] == 'LY']
-wkly_pmix1 = wkly_pmix1.sort_values(by=['mcd_gbal_lcat_id_nu'])
-wkly_pmix1 = wkly_pmix1.groupby(['mcd_gbal_lcat_id_nu']).agg(
-    {'WK_END_THU_ID_NU': np.size(), 'WK_END_THU_ID_NU': pd.Series.nunique})
-wkly_pmix1.rename(columns={'WK_END_THU_ID_NU': 'weekcnt1'})
-lastyearstrs = wkly_pmix1
-print(lastyearstrs)
+thisyearstrs2=(
+    wkly_pmix1[wkly_pmix1['period']=='CY']
+    .groupby(['mcd_gbal_lcat_id_nu'])['WK_END_THU_ID_NU']
+    .count()
+    .unique()
+    .reset_index()
+    .sort_values(by['mcd_gbal_lcat_id_nu'])
+)
+thisyearstrs2.rename(columns={'WK_END_THU_ID_NU':'weekcnt3'})
 
-wkly_pmix1['period'] = [wkly_pmix1['period'] == 'Pre_CY']
-wkly_pmix1 = wkly_pmix1.sort_values(by=['mcd_gbal_lcat_id_nu'])
-wkly_pmix1 = wkly_pmix1.groupby(['mcd_gbal_lcat_id_nu']).agg(
-    {'WK_END_THU_ID_NU': np.size(), 'WK_END_THU_ID_NU': pd.Series.nunique})
-wkly_pmix1.rename(columns={'WK_END_THU_ID_NU': 'weekcnt1'})
-thisyearstrs = wkly_pmix1
-print(thisyearstrs)
+storelst=(
+    pd.merge(lastyearstrs,thisyearstrs,on='mcd_gbal_lcat_id_nu',how='inner')
+    .merge(thisyearstrs2,left_on='mcd_gbal_lcat_id_nu',right_on='mcd_gbal_lcat_id_nu',how='inner')
+)
 
-wkly_pmix1['period'] = [wkly_pmix1['period'] == 'CY']
-wkly_pmix1 = wkly_pmix1.sort_values(by=['mcd_gbal_lcat_id_nu'])
-wkly_pmix1 = wkly_pmix1.groupby(['mcd_gbal_lcat_id_nu']).agg(
-    {'WK_END_THU_ID_NU': np.size(), 'WK_END_THU_ID_NU': pd.Series.nunique})
-wkly_pmix1.rename(columns={'WK_END_THU_ID_NU': 'weekcnt1'})
-thisyearstrs2 = wkly_pmix1
-print(thisyearstrs2)
-
-storelst = pd.merge(lastyearstrs, thisyearstrs, how='inner', on=[
-                    'mcd_gbal_lcat_id_nu']).merge(thisyearstrs2, how='inner', on=['mcd_gbal_lcat_id_nu'])
-print(storelst)
-
-
-gstcnts1 = pd.DataFrame(f"{mylib1}/gstcnts1")
+gstcnts1 = pd.DataFrame(f"{lisa}/gstcnts1")
 gstcnts = pd.merge(gstcnts1, storelst, on=['mcd_gbal_lcat_id_nu'])
 gstcnts.rename(columns={'InStore': 'delivery'})
 print(gstcnts)
 
 # /*** Join price data into Sales data ***/
 
-wkly_pmixMB = pd.merge(wkly_pmix1, storelst, on=['mcd_gbal_lcat_id_nu', ''])\
-    .merge(PriceSnapMB, how='left', on=['mcd_gbal_lcat_id_nu'])
-wkly_pmixMB = wkly_pmixMB[(wkly_pmixMB['cal_dt'] >= prc_eff_dt) & (
-    wkly_pmixMB['prc_end_dt'] <= prc_eff_dt)]
-print(wkly_pmixMB)
+wkly_pmixMB = (
+    pd.merge(wkly_pmix1, storelst, on=['mcd_gbal_lcat_id_nu'])
+    .merge(PriceSnapMB, how='left', left_on=['mcd_gbal_lcat_id_nu','SLD_MENU_ITM_ID'],right_on=['MCD_GBAL_LCAT_ID_NU','SLD_MENU_ITM_ID '])
+).query('cal_dt >= prc_eff_dt and cal_dt <= prc_end_dt')
+
 
 # /***** Aggregating Daily data to weekly ****/
-
-wkly_pmixMB['Menu_sales'] = \
-    wkly_pmixMB.groupby(['WK_END_DT', 'WK_END_THU_ID_NU', 'terr_cd', 'mcd_gbal_lcat_id_nu', 'store_nu', 'sld_menu_itm_id', 'sld_menu_itm_na', 'itm_category', 'period'])\
-    .agg({'alacarte_units': np.sum, 'combo_units': np.sum, 'total_units': np.sum, 'net_sales_lcl': np.sum, 'gross_sales_lcl': np.sum, 'total_cost_lcl': np.sum, 'frnt_cter_itm_prc_am': np.sum})
-
-wkly_pmixMB['Menu_sales'] = \
-    wkly_pmixMB[wkly_pmixMB['frnt_cter_itm_prc_am']
-                * wkly_pmixMB['alacarte_units']]
+wkly_pmixMB.groupby(
+    ['WK_END_DT',
+    'WK_END_THU_ID_NU',
+    'terr_cd',
+    'mcd_gbal_lcat_id_nu',
+    'store_nu',
+    'sld_menu_itm_id',
+    'sld_menu_itm_na',
+    'itm_category',
+    'period']
+).agg(
+    alacarte_unit=pd.NamedAgg(column='alacarte_units',aggfunc='sum')
+    combo_units=pd.NamedAgg(column='combo_units',aggfunc='sum')
+    total_units=pd.NamedAgg(column='total_units',aggfunc='sum')
+    net_sales_lcl=pd.NamedAgg(column='net_sales_lcl',aggfunc='sum')
+    gross_sales_lcl=pd.NamedAgg(column='gross_sales_lcl',aggfunc='sum')
+    total_cost_lcl=pd.NamedAgg(column='total_cost_lcl',aggfunc='sum')
+)
+wkly_pmixMB['Menu_sales']=wkly_pmixMB['frnt_cter_itm_prc_am']*wkly_pmixMB['alacarte_units']

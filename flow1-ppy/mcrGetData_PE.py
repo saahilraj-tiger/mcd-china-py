@@ -79,13 +79,11 @@ select a.*, b.period, b.lastyear
 from weekenddates2 a join weekenddates1c b on (a.wk_end_thu_wk_nu=b.wk_end_thu_wk_nu and a.wk_end_thu_end_yr_nu=b.lastyear);
 ''')
 
-weekenddates = weekenddates3.append(weekenddates1)
+weekenddates = weekenddates3.append(weekenddates1,ignore_index=True)
 
-weekenddates.loc[(weekenddates['lastyear'] == weekenddates['wk_end_thu_end_yr_nu']
-                  & weekenddates['period'] == 'CY'), 'period'] = 'LY'
+weekenddates.loc[(weekenddates['lastyear'] == weekenddates['wk_end_thu_end_yr_nu'])& (weekenddates['period'] == 'CY'), 'period'] = 'LY'
 
-weekenddates.loc[(weekenddates['lastyear'] == weekenddates['wk_end_thu_end_yr_nu']
-                  & weekenddates['period'] == 'Pre_CY'), 'period'] = 'Pre_LY'
+weekenddates.loc[(weekenddates['lastyear'] == weekenddates['wk_end_thu_end_yr_nu'])& (weekenddates['period'] == 'Pre_CY'), 'period'] = 'Pre_LY'
 
 weekenddates.drop(['lastyear'], axis=1)
 
@@ -209,8 +207,7 @@ PriceSnap5.sort_values(by=['MCD_GBAL_LCAT_ID_NU ', 'sld_menu_itm_id ', 'accepted
                        'partial ', 'prc_end_dt'], ascending=[True, False, False, False, True])
 
 PriceSnap6 = PriceSnap5
-PriceSnap6.groupby(by=['MCD_GBAL_LCAT_ID_NU ', 'sld_menu_itm_id ',
-                   'accepted ', 'partial ', 'prc_end_dt']).first()
+PriceSnap6.groupby(by=['MCD_GBAL_LCAT_ID_NU ', 'sld_menu_itm_id ','accepted ', 'partial ', 'prc_end_dt'])
 
 PriceSnap7 = pd.merge(PriceSnap6, PriceSnap4b, on=[
                       'MCD_GBAL_LCAT_ID_NU', 'sld_menu_itm_id'])
